@@ -9,38 +9,56 @@ document.addEventListener("DOMContentLoaded", function(event) {
 });
 
 processChatFile = function(evt) {
+    let startTime = Date.now();
+
     let text = evt.target.result;
     let lines = text.split(/\r?\n/);
 
     let lineObjects = [];
-    let lineObjectsIndex = 0;
+    let lineObjectsIndex = -1;
+
+    let usersMap = new Map();
 
     for (let i = 0; i < lines.length; i++) {
         let currentLine = lines[i];
-        debugger
 
-        let date = currentLine.substring(0, 7);
+        let dateSplit = currentLine.split(", ");
+        let dateString = dateSplit[0];
+        let dateMoment = moment(dateString);
 
-        let moment = moment(date);
+        if (dateMoment.isValid() && dateSplit[1]) {
+            console.log(dateSplit[0]);
+            let timeSplit = dateSplit[1].split(' - ');
+            let sender = timeSplit[1].split(": ")[0];
 
-        if (moment.isValid()) {
-            let time = currentLine.substring(9, 14)
-            let sender = currentLine.substring(17).split(": ")[0];
-            let message = currentLine.substring(17).split(": ")[1];
+            if (!timeSplit[1].split(": ")[1]) {
+                continue;
+            }
 
             let lineObj = {
-                date: date,
-                time: time,
+                date: dateMoment,
+                time: timeSplit[0],
                 sender: sender,
-                message: message
+                message: timeSplit[1].split(": ")[1]
             }
             
+            if (usersMap.has(sender)) {
+                let messageList = usersMap.get(sender);
+                messageList.push(lineObj)
+                usersMap.set(sender, messageList);
+            } else {
+                usersMap.set(sender, [lineObj])
+            }
             lineObjects.push(lineObj);
+
             lineObjectsIndex++;
         } else {
-            lineObjects[lineObjectsIndex].message += currentLine;
+            lineObjects[lineObjectsIndex].message += ` ${currentLine}`;
         }
     }
+
+    let endTime = Date.now();
+    console.log(`Time taken: ${(endTime - startTime) / 1000} seconds.`)
 
     debugger;
 }
